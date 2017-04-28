@@ -7,15 +7,15 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-import org.springframework.http.ResponseEntity;
+import org.springframework.cloud.netflix.feign.EnableFeignClients;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
 @EnableDiscoveryClient
+@EnableFeignClients
 @SpringBootApplication
 public class EurekaConsumerApplication {
 
@@ -27,8 +27,6 @@ public class EurekaConsumerApplication {
 @RestController
 class ServiceInstanceRestController {
 
-    private static final String EUREKA_PRODUCER_SERVICE_NAME = "eureka-producer";
-
     @Value("${eureka.instance.instance-id}")
     private String instanceId;
 
@@ -36,7 +34,7 @@ class ServiceInstanceRestController {
     private DiscoveryClient discoveryClient;
 
     @Autowired
-    private RestTemplate restTemplate;
+    private ProducerClient producer;
 
     @RequestMapping("/service-instances/{applicationName}")
     public List<ServiceInstance> serviceInstancesByApplicationName(
@@ -51,10 +49,6 @@ class ServiceInstanceRestController {
 
     @RequestMapping("/producer")
     public String producer() {
-        return "Client " + instanceId + " connected to " + fetchInfoFromProducer().getBody();
-    }
-
-    private ResponseEntity<String> fetchInfoFromProducer() {
-        return restTemplate.getForEntity("http://" + EUREKA_PRODUCER_SERVICE_NAME + "/info", String.class);
+        return "Client " + instanceId + " connected to feign " + producer.info();
     }
 }
